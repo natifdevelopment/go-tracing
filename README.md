@@ -112,7 +112,7 @@ tp, err := tracing.Init(tracing.Config{
 | `SERVICE_VERSION` | `0.0.0` | Service version |
 | `ENVIRONMENT` | `development` | Deployment environment |
 | `OTEL_TRACES_SAMPLE_RATE` | `1.0` | Sampling ratio (0.0–1.0) |
-| `OTEL_TRACES_ENABLED` | `true` | Enable/disable tracing |
+| `OTEL_TRACES_ENABLED` | `false` | Enable/disable tracing |
 
 ## API
 

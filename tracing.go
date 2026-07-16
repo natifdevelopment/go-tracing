@@ -32,7 +32,7 @@
 //	SERVICE_VERSION              - Service version (default: 0.0.0)
 //	ENVIRONMENT                  - deployment environment (default: development)
 //	OTEL_TRACES_SAMPLE_RATE      - sampling ratio 0.0-1.0 (default: 1.0)
-//	OTEL_TRACES_ENABLED          - enable tracing (default: true)
+//	OTEL_TRACES_ENABLED          - enable tracing (default: false)
 //
 // # Exporter Types
 //
@@ -106,7 +106,7 @@ func ConfigFromEnv() Config {
 		OTLPEndpoint:   getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317"),
 		ZipkinEndpoint: getEnv("OTEL_EXPORTER_ZIPKIN_ENDPOINT", "http://localhost:9411/api/v2/spans"),
 		SampleRate:     getEnvFloat("OTEL_TRACES_SAMPLE_RATE", 1.0),
-		Enabled:        getEnvBool("OTEL_TRACES_ENABLED", true),
+		Enabled:        getEnvBool("OTEL_TRACES_ENABLED", false),
 	}
 	return cfg
 }
