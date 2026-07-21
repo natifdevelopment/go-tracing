@@ -13,7 +13,7 @@
 //	    ServiceName:    "my-service",
 //	    ServiceVersion: "1.0.0",
 //	    Environment:    "production",
-//	    OTLPEndpoint:   "localhost:4317",
+//	    OTLPEndpoint:   "",
 //	})
 //	if err != nil {
 //	    log.Fatalf("tracing init failed: %v", err)
@@ -26,8 +26,8 @@
 // # Configuration via Environment Variables
 //
 //	OTEL_TRACES_EXPORTER         - exporter type: otlp|otlphttp|jaeger|tempo|zipkin|noop|custom (default: otlp)
-//	OTEL_EXPORTER_OTLP_ENDPOINT  - OTLP gRPC/HTTP endpoint (default: localhost:4317)
-//	OTEL_EXPORTER_ZIPKIN_ENDPOINT - Zipkin collector URL (default: http://localhost:9411/api/v2/spans)
+//	OTEL_EXPORTER_OTLP_ENDPOINT  - OTLP gRPC/HTTP endpoint (default: "")
+//	OTEL_EXPORTER_ZIPKIN_ENDPOINT - Zipkin collector URL (default: "")
 //	OTEL_SERVICE_NAME            - Service name (default: unknown)
 //	SERVICE_VERSION              - Service version (default: 0.0.0)
 //	ENVIRONMENT                  - deployment environment (default: development)
@@ -82,6 +82,11 @@ const (
 	ExporterTypeCustom ExporterType = "custom"
 )
 
+// TracingConfig is the global tracing configuration set by the application.
+// When ServiceName is set, ConfigFromEnv returns it instead of reading
+// environment variables, so services can centralize config in configs.* globals.
+var TracingConfig Config
+
 // Config holds tracing configuration.
 type Config struct {
 	ServiceName    string
@@ -96,15 +101,29 @@ type Config struct {
 	CustomExporter sdktrace.SpanExporter
 }
 
-// ConfigFromEnv loads tracing configuration from environment variables.
+// ConfigFromEnv returns the tracing configuration.
+// If the application has set TracingConfig.ServiceName, it is returned
+// (with defaults applied for empty exporter/sample fields).
+// Otherwise configuration is loaded from environment variables.
 func ConfigFromEnv() Config {
+	if TracingConfig.ServiceName != "" {
+		cfg := TracingConfig
+		if cfg.ExporterType == "" {
+			cfg.ExporterType = ExporterTypeOTLP
+		}
+		if cfg.SampleRate == 0 {
+			cfg.SampleRate = 1.0
+		}
+		return cfg
+	}
+
 	cfg := Config{
 		ServiceName:    getEnv("OTEL_SERVICE_NAME", getEnv("SERVICE_NAME", "unknown")),
 		ServiceVersion: getEnv("SERVICE_VERSION", "0.0.0"),
 		Environment:    getEnv("ENVIRONMENT", "development"),
 		ExporterType:   ExporterType(getEnv("OTEL_TRACES_EXPORTER", string(ExporterTypeOTLP))),
-		OTLPEndpoint:   getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4317"),
-		ZipkinEndpoint: getEnv("OTEL_EXPORTER_ZIPKIN_ENDPOINT", "http://localhost:9411/api/v2/spans"),
+		OTLPEndpoint:   getEnv("OTEL_EXPORTER_OTLP_ENDPOINT", ""),
+		ZipkinEndpoint: getEnv("OTEL_EXPORTER_ZIPKIN_ENDPOINT", ""),
 		SampleRate:     getEnvFloat("OTEL_TRACES_SAMPLE_RATE", 1.0),
 		Enabled:        getEnvBool("OTEL_TRACES_ENABLED", false),
 	}

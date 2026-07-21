@@ -27,11 +27,10 @@ func createExporter(ctx context.Context, cfg Config) (sdktrace.SpanExporter, err
 		)
 
 	case ExporterTypeZipkin:
-		url := cfg.ZipkinEndpoint
-		if url == "" {
-			url = "http://localhost:9411/api/v2/spans"
+		if cfg.ZipkinEndpoint == "" {
+			return nil, fmt.Errorf("tracing: Zipkin endpoint not configured")
 		}
-		return zipkin.New(url)
+		return zipkin.New(cfg.ZipkinEndpoint)
 
 	case ExporterTypeCustom:
 		if cfg.CustomExporter == nil {
